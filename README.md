@@ -1,7 +1,7 @@
 # PixelDraw.py
 Create polygons from pixels in Blender
 
-![Example](https://pbs.twimg.com/media/C6mZrflWwAAOWOK.jpg)
+![Tanooki](https://pbs.twimg.com/media/C6mZrflWwAAOWOK.jpg)
 
 Required:
 -----------------------
@@ -24,10 +24,13 @@ you can use pip for Python3:
 >or win:  
         `py -m pip install pypng`  
 
-![Example](https://pbs.twimg.com/media/C6ooNZOWkAIboX_.jpg)
+![DoomHead](https://pbs.twimg.com/media/C6ooNZOWkAIboX_.jpg)
 
 
-![Example](https://pbs.twimg.com/media/C6oT841U0AAV5Z7.jpg)
+![Marine](https://pbs.twimg.com/media/C6oT841U0AAV5Z7.jpg)
 
 
-![Example](https://pbs.twimg.com/media/C6n3KkxVwAA60rF.jpg)
+![Mario](https://pbs.twimg.com/media/C6n3KkxVwAA60rF.jpg)
+
+
+![Sonic](https://pbs.twimg.com/media/C6tSL9WWcAApNzz.jpg)
