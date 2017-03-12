@@ -14,15 +14,11 @@ import bpy
 import bmesh
 from random import uniform
 
-def draw(W, H, pixels, meta):
+def draw(W, H, pixels, meta, gloss=True):
   array  = list(pixels)
 
-  if W > H:
-    MajorAxis  = W
-  else:
-    MajorAxis  = H
-
-  center  = 16 / MajorAxis
+  if W > H:  center  = 16 / W
+  else:      center  = 16 / H
 
   ##  the default grid is +8 & -8, along X and Y.
   ##  so it finds the largest of those two  (W or H)
@@ -32,54 +28,58 @@ def draw(W, H, pixels, meta):
   #  print(array[X][Y] / 255)
 
   ##  meta['alpha'] is either True or False
-  if meta['alpha']:
-    bpp  = 4  ##  RGBA
-  else:      ##  bpp  = bits per plane
-    bpp  = 3  ##  RGB
+  if meta['alpha']:   bpp  = 4     ##  RGBA
+  else:               bpp  = 3     ##  RGB
+                  ##  bpp  = bits per plane
+
   #  print(str(bpp))
   #  print(meta)
 
-  R, G, B  = array[0][0:3]
-  background  = [R, G, B]
+  background  = array[0][0:3]
   #  print('background:  ' + str(background))
+
+  ww  = W / 2
+  hh  = H / 2
 
   Y  = 0
   while Y < H:
+    yy  = array[Y]
+
     X  = 0
     while X < W:
       ##if meta['indexed']:
         ##index  = array[Y][X]
 
       xx  = X * bpp
-      yy  = array[Y]
-      R, G, B  = yy[xx : xx + 3]
-      color  = [R, G, B]
+      color  = [R, G, B]  = yy[xx : xx + 3]
 
       if color != background:
         #  print(str(X) + ', ' + str(Y) + ',  ' + str(color))
 
-        brightness  = (R+R+R + G+G+G+G + B) / 8
+        brightness  = (R+R + G+G+G + B) / 6
 ##    our eyes are sensitive to shades of red and even moreso to green,
 ##    so more samples of them are taken when averaging luminosity value.
-##    stackoverflow.com/a/596241
+##    stackoverflow.com/a/596241       using fast approximation
 
-        Z = brightness / 50
+        Z  = brightness / 50
+        zz  = Z / 10
 
-        if brightness < 10:
-          bpy.ops.mesh.primitive_ico_sphere_add(size  = center + 0.285 - Z / 10,
-              location  = ((X - W / 2) * center,  (-Y + H / 2) * center,  Z),
-              rotation  = (0,  0,  uniform(-1, 1)))
+        if brightness < 10:   ##  shadows
+          bpy.ops.mesh.primitive_ico_sphere_add(size= center + 0.3,
+              location= ((X - ww) * center,  (-Y + hh) * center,  Z),
+              rotation= (0,  0,  uniform(-1, 1)))
 
-        elif brightness < 200:
-          bpy.ops.mesh.primitive_cone_add(vertices  = 5,   end_fill_type  = 'NOTHING',
-              depth  = 4.5 - Z,   location  = ((X - W / 2) * center,  (-Y + H / 2) * center,  Z),
-              radius1  = center + 0.285 - Z / 10,
-              rotation  = (0,  0,  0.785398 + uniform(-0.5, 0.5)))
+        elif brightness < 200:   ##  midtones
+          bpy.ops.mesh.primitive_cone_add(vertices= 4,   end_fill_type= 'NOTHING',
+              depth= 4 - Z,  radius1= center + 0.2 - zz,
+              location= ((X - ww) * center,  (-Y + hh) * center,  Z * 0.7),
+              rotation= (0,  0,  0.785398))      ##  + uniform(-0.5, 0.5)))
 
-        else:
-          bpy.ops.mesh.primitive_cone_add(vertices  = 4,   end_fill_type  = 'NOTHING',
-              depth  = 4.5 - Z,   location  = ((X - W / 2) * center,  (-Y + H / 2) * center,  Z),
-              radius1  = center + 0.285 - Z / 10,   rotation  = (0, 0, 0.785398))
+        else:   ##  highlights
+          bpy.ops.mesh.primitive_cone_add(vertices  = 4,   end_fill_type= 'NOTHING',
+              depth= 5.1 - Z,   radius1= center,
+              location= ((X - ww) * center,  (-Y + hh) * center,  Z * 0.5),
+              rotation= (0, 0, 0.785398))
 
 ##  4 vertices = pyramid,  end_fill = nothing  cuts down on polygons,  depth is how tall it is
 ##  location is centered on the grid,  radius1 is width,  radius2 chops off the top...
@@ -92,10 +92,21 @@ def draw(W, H, pixels, meta):
         obj.data.materials.append(material)
 
         material.diffuse_color  = (R / 256, G / 256, B / 256)
-        material.raytrace_mirror.use  = True
-        material.raytrace_mirror.reflect_factor  = 0.25
-        material.raytrace_mirror.fresnel_factor  = 3
-        material.raytrace_mirror.fade_to  = 'FADE_TO_MATERIAL'
+        if gloss:
+          material.raytrace_mirror.use  = True
+          material.raytrace_mirror.reflect_factor  = 0.25
+          material.raytrace_mirror.fresnel_factor  = 3
+          material.raytrace_mirror.fade_to  = 'FADE_TO_MATERIAL'
+
+        bpy.ops.object.material_slot_assign()
+
+      X += 1
+    Y += 1
+
+
+
+##=============================================================
+##  eof  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         bpy.ops.object.material_slot_assign()
 
