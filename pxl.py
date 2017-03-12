@@ -59,24 +59,24 @@ def draw(W, H, pixels, meta, gloss=True):
 
         brightness  = (R+R + G+G+G + B) / 6
 ##    our eyes are sensitive to shades of red and even moreso to green,
-##    so more samples of them are taken when averaging luminosity value.
+##    so extra samples of them are taken when averaging luminosity value.
 ##    stackoverflow.com/a/596241       using fast approximation
 
         Z  = brightness / 50
         zz  = Z / 10
 
-        if brightness < 10:   ##  shadows
+        if brightness < 10:   ##  shadow
           bpy.ops.mesh.primitive_ico_sphere_add(size= scale + 0.3,
               location= ((X - ww) * scale,  (-Y + hh) * scale,  Z),
               rotation= (0,  0,  uniform(-1, 1)))
 
-        elif brightness < 200:   ##  midtones
+        elif brightness < 200:   ##  midtone
           bpy.ops.mesh.primitive_cone_add(vertices= 4,   end_fill_type= 'NOTHING',
               depth= 4 - Z,  radius1= scale + 0.2 - zz,
               location= ((X - ww) * scale,  (-Y + hh) * scale,  Z * 0.7),
               rotation= (0,  0,  0.785398))      ##  + uniform(-0.5, 0.5)))
 
-        else:   ##  highlights
+        else:   ##  highlight
           bpy.ops.mesh.primitive_cone_add(vertices  = 4,   end_fill_type= 'NOTHING',
               depth= 5.1 - Z,   radius1= scale,
               location= ((X - ww) * scale,  (-Y + hh) * scale,  Z * 0.5),
