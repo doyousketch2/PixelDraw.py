@@ -17,12 +17,13 @@ from random import uniform
 def draw(W, H, pixels, meta, gloss=True):
   array  = list(pixels)
 
-  if W > H:  center  = 16 / W
-  else:      center  = 16 / H
+  if W > H:  scale  = 16 / W
+  else:      scale  = 16 / H
 
   ##  the default grid is +8 & -8, along X and Y.
-  ##  so it finds the largest of those two  (W or H)
-  ##  and centers pixels within that 16 blender-unit square
+  ##  find the largest of those two  (W or H)
+  ##  then use a scale-factor for the polygons
+  ##  to center pixels within that 16 blender-unit square
 
   #  print(str(W) + ', ' + str(H))
   #  print(array[X][Y] / 255)
@@ -65,24 +66,24 @@ def draw(W, H, pixels, meta, gloss=True):
         zz  = Z / 10
 
         if brightness < 10:   ##  shadows
-          bpy.ops.mesh.primitive_ico_sphere_add(size= center + 0.3,
-              location= ((X - ww) * center,  (-Y + hh) * center,  Z),
+          bpy.ops.mesh.primitive_ico_sphere_add(size= scale + 0.3,
+              location= ((X - ww) * scale,  (-Y + hh) * scale,  Z),
               rotation= (0,  0,  uniform(-1, 1)))
 
         elif brightness < 200:   ##  midtones
           bpy.ops.mesh.primitive_cone_add(vertices= 4,   end_fill_type= 'NOTHING',
-              depth= 4 - Z,  radius1= center + 0.2 - zz,
-              location= ((X - ww) * center,  (-Y + hh) * center,  Z * 0.7),
+              depth= 4 - Z,  radius1= scale + 0.2 - zz,
+              location= ((X - ww) * scale,  (-Y + hh) * scale,  Z * 0.7),
               rotation= (0,  0,  0.785398))      ##  + uniform(-0.5, 0.5)))
 
         else:   ##  highlights
           bpy.ops.mesh.primitive_cone_add(vertices  = 4,   end_fill_type= 'NOTHING',
-              depth= 5.1 - Z,   radius1= center,
-              location= ((X - ww) * center,  (-Y + hh) * center,  Z * 0.5),
+              depth= 5.1 - Z,   radius1= scale,
+              location= ((X - ww) * scale,  (-Y + hh) * scale,  Z * 0.5),
               rotation= (0, 0, 0.785398))
 
 ##  4 vertices = pyramid,  end_fill = nothing  cuts down on polygons,  depth is how tall it is
-##  location is centered on the grid,  radius1 is width,  radius2 chops off the top...
+##  location is scaleed on the grid,  radius1 is width,  radius2 chops off the top...
 ##  but it'll look hollow without end_fill,  rotation on the Z-axis 45° = 0.785398 radians
 
         obj  = bpy.context.scene.objects.active
@@ -97,16 +98,6 @@ def draw(W, H, pixels, meta, gloss=True):
           material.raytrace_mirror.reflect_factor  = 0.25
           material.raytrace_mirror.fresnel_factor  = 3
           material.raytrace_mirror.fade_to  = 'FADE_TO_MATERIAL'
-
-        bpy.ops.object.material_slot_assign()
-
-      X += 1
-    Y += 1
-
-
-
-##=============================================================
-##  eof  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         bpy.ops.object.material_slot_assign()
 
