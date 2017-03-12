@@ -10,11 +10,19 @@
 ##
 ##  GNU GPLv3                 gnu.org/licenses/gpl-3.0.html
 ##=========================================================
+##  libs  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 import bpy
 import bmesh
+from time import time
+from math import floor
 from random import uniform
 
+##=========================================================
+##  script  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 def draw(W, H, pixels, meta, gloss=True):
+  looptimer  = time()   ##  initialize timer
   array  = list(pixels)
 
   if W > H:  scale  = 16 / W
@@ -25,7 +33,7 @@ def draw(W, H, pixels, meta, gloss=True):
   ##  then use a scale-factor for the polygons
   ##  to center pixels within that 16 blender-unit square
 
-  #  print(str(W) + ', ' + str(H))
+  print('Width: ' + str(W) + ', Height: ' + str(H))
   #  print(array[X][Y] / 255)
 
   ##  meta['alpha'] is either True or False
@@ -36,14 +44,17 @@ def draw(W, H, pixels, meta, gloss=True):
   #  print(str(bpp))
   #  print(meta)
 
-  background  = array[0][0:3]
-  #  print('background:  ' + str(background))
+  background  = [R, G, B]  = array[0][0:3]
+  print('background:  [' + str(R) + ', ' + str(G) + ', ' + str(B) + ']')
 
   ww  = W / 2
   hh  = H / 2
 
   Y  = 0
   while Y < H:
+    looptime  = floor((time() - looptimer) * 100) / 100
+    print(str(looptime) + '  Line: ' + str(Y + 1) + ' of: ' + str(H))
+    looptimer  = time()   ##  re-init timer for next loop
     yy  = array[Y]
 
     X  = 0
@@ -89,17 +100,24 @@ def draw(W, H, pixels, meta, gloss=True):
         obj  = bpy.context.scene.objects.active
         name  = obj.name
 
-        material  = bpy.data.materials.new(name)
-        obj.data.materials.append(material)
+        colorstring  = 'r' + str(R) + ' g' + str(G) + ' b' + str(B)
 
-        material.diffuse_color  = (R / 256, G / 256, B / 256)
-        if gloss:
-          material.raytrace_mirror.use  = True
-          material.raytrace_mirror.reflect_factor  = 0.25
-          material.raytrace_mirror.fresnel_factor  = 3
-          material.raytrace_mirror.fade_to  = 'FADE_TO_MATERIAL'
+        if colorstring in bpy.data.materials.keys():
+          bpy.context.object.data.materials.append(bpy.data.materials[colorstring])
+          bpy.data.materials[colorstring]
 
-        bpy.ops.object.material_slot_assign()
+        else:
+          material  = bpy.data.materials.new(name)
+          obj.data.materials.append(material)
+          material.diffuse_color  = (R / 256, G / 256, B / 256)
+
+          if gloss:
+            material.raytrace_mirror.use  = True
+            material.raytrace_mirror.reflect_factor  = 0.25
+            material.raytrace_mirror.fresnel_factor  = 3
+            material.raytrace_mirror.fade_to  = 'FADE_TO_MATERIAL'
+
+          bpy.ops.object.material_slot_assign()
 
       X += 1
     Y += 1
