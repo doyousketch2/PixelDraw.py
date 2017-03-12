@@ -1,5 +1,5 @@
 # PixelDraw.py
-Create polygons from pixels in Blender
+Create polygons from pixels in Blender  
 (Scroll down for more examples)
 
 ![DragonsCurse](https://pbs.twimg.com/media/C6txshdWYAAWOkV.jpg)
