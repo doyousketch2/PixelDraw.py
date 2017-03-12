@@ -33,11 +33,14 @@
 ##=============================================================
 ##  vars  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+##  point this to wherever pip installed your PyPNG module:
+pngmodule  = '/usr/local/lib/python3.4/dist-packages/'
+
 ##  tell it where your PixelDraw dir is:
 path  = '/home/eli/Pictures/Blend/Python/PixelDraw/'
 
 ##  image name you're currently on:
-img   = 'Sonic2'
+img   = 'DragonsCurse'
 
 ##  no need to specify file extension,
 ##  PyPNG uses PNG files, exclusively.
@@ -46,8 +49,9 @@ filetype  = '.png'
 ##  it doesn't like indexed images yet...
 ##  you may need to convert to RGB instead.
 
-##  point this to wherever pip installed your PyPNG module:
-pngmodule  = '/usr/local/lib/python3.4/dist-packages/'
+##  glossy Raytrace?  True / False
+gloss  = False
+
 ##=============================================================
 ##  libs  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -69,14 +73,17 @@ begin  = time()  ##  initialize timer. Blender advised using it
 Re  = png.Reader(path + img + filetype)
 W, H, pixels, meta  = Re.read()
 
-pxl.draw(W, H, pixels, meta)
+
+##  draw(W, H, pixels, meta, gloss=True)
+
+pxl.draw(W, H, pixels, meta, gloss)
 
 ##=============================================================
 print('PixelDraw finished: %.4f sec' % (time() - begin))
 
 '''
-Sampling notes:        square unchecked.  seems like a joke button.
-                                   adds confusion to the interface.
+Sampling notes:     square unchecked.  seems like a joke button
+                               adds confusion to the interface.
 Branched Path Tracing
 Clamp Direct   10.00         this could be turned down to say 4
 Clamp Indirect 10.00       or 6, but it clamps down on fireflys
@@ -87,14 +94,14 @@ Render:       25             <-- AntiAlias reduces noise
 Preview:       0
 
 Diffuse:       1
-Glossy:       50          glossy tends to be noisy, but doesn't take much
-                          time to calculate extra samples, so I set this high
+Glossy:       50      glossy tends to be noisy, doesn't take much
+                  time to calculate extra samples, so set it high
 rest of 'em:   1
 
 Turn transmission up to 5 if using transparent material
 
-Pattern:  Correlated Multi-jitter,  it's a Sudoku style render pattern
-
+Pattern:  Correlated Multi-jitter
+it's a Sudoku style render pattern
 
 
 ===========================================================
