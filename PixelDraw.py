@@ -66,7 +66,7 @@ sys.path.append(path)
 
 import pxl
 
-begin  = time()  ##  initialize timer. Blender advised using it
+begin  = time()        ##  initialize timer. Blender advises it
 ##=============================================================
 ##  script  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -78,9 +78,9 @@ W, H, pixels, meta  = Re.read()
 
 pxl.draw(W, H, pixels, meta, gloss)
 
-##=============================================================
-print('PixelDraw finished: %.4f sec' % (time() - begin))
 
+print('PixelDraw finished: %.4f sec' % (time() - begin))
+##=============================================================
 '''
 Sampling notes:     square unchecked.  seems like a joke button
                                adds confusion to the interface.
