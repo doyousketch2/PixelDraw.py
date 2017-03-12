@@ -10,14 +10,14 @@
 ##
 ##  GNU GPLv3                 gnu.org/licenses/gpl-3.0.html
 ##=========================================================
-##  required  ---------------------------------------------
+##  required  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ##
 ##  first, get Blender from their website.
 ##
 ##  then you'll need PyPNG:
 ##  -----------------------
 ##    you can use pip for Python3:
-##    pip should come with any recent version of Python.
+##        pip should come with any recent version of Python.
 ##    (linux - use synaptic package manager, or...)
 ##        sudo apt-get install python3-pip
 ##    (mac)
@@ -30,130 +30,93 @@
 ##        sudo python3 -m pip install pypng
 ##    (or win)
 ##        py -m pip install pypng
-##  --------------------------------
-##  or skip the whole pip method and download PyPNG from GitHub
-##    github.com/drj11/pypng
-##    then unzip it in your Blender modules dir
 ##=============================================================
-#  libs
+##  vars  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import sys
-import bpy
-import bmesh
-from time import time
+##  tell it where your PixelDraw dir is:
+path  = '/home/eli/Pictures/Blend/Python/PixelDraw/'
 
-##  point this to wherever pip installed your PyPNG module:
-sys.path.append('/usr/local/lib/python3.4/dist-packages/')
-import png
+##  image name you're currently on:
+img   = 'Sonic2'
 
-begin  = time()  ##  initialize timer. Blender advised using it
-##=============================================================
-#  vars
+##  no need to specify file extension,
+##  PyPNG uses PNG files, exclusively.
+filetype  = '.png'
 
-
-path  = '/home/eli/Pictures/Blend/py/PixelDraw/'
-img  = 'sprite.png'
 ##  it doesn't like indexed images yet...
 ##  you may need to convert to RGB instead.
 
-
-##  flat for these colors
-outline  = [[0, 0, 0], [255, 255, 255]]
-
-##  shallow depth for these colors
-flesh  = [[248, 112, 104], [248, 208, 192], [252, 181, 168]]
-
-
+##  point this to wherever pip installed your PyPNG module:
+pngmodule  = '/usr/local/lib/python3.4/dist-packages/'
 ##=============================================================
-#  script
+##  libs  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-r  = png.Reader(path + img)
-W, H, pixels, meta  = r.read()
-array  = list(pixels)
+import sys
+from time import time
 
-##  print(str(W) + ', ' + str(H))
-##  print(array[x][y] / 255)
+sys.path.append(pngmodule)
 
-##  meta['alpha'] is either True or False
-if meta['alpha']:
-  bpp  = 4  ##  RGBA
-else:      ##  bpp  = bits per plane
-  bpp  = 3  ##  RGB
-print(str(bpp))
-print(meta)
+import png
 
-r, g, b  = array[0][0:3]
-background  = [r, g, b]
-print('background:  ' + str(background))
+sys.path.append(path)
 
-y  = 0
-while y < H:
-  x  = 0
-  while x < W:
-    ##if meta['indexed']:
-      ##index  = array[y][x]
+import pxl
 
-    xx = x * bpp
-    yy = array[y]
-    r, g, b  = yy[xx : xx + 3]
-    color  = [r, g, b]
+begin  = time()  ##  initialize timer. Blender advised using it
+##=============================================================
+##  script  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    if color != background:
-      ##  print(str(x) + ', ' + str(y) + ',  ' + str(color))
+Re  = png.Reader(path + img + filetype)
+W, H, pixels, meta  = Re.read()
 
-##  4 vertices = pyramid, end_fill = nothing is to cut down on polygons, depth is how tall it is
-##  location is centered on the grid, radius1 is width, radius2 chops off the top...
-##  but it'll look hollow without end_fill, rotation on the Z-axis 45° = 0.785398 radians
-
-      if color in outline:
-        bpy.ops.mesh.primitive_cone_add(vertices=4, end_fill_type='NOTHING', depth=0.1,
-            location=(x - W / 2, -y + H / 2, 0), radius1=1, rotation=(0, 0, 0.785398))
-
-      elif color in flesh:
-        bpy.ops.mesh.primitive_cone_add(vertices=4, end_fill_type='NOTHING', depth=0.2,
-            location=(x - W / 2, -y + H / 2, 0), radius1=1, rotation=(0, 0, 0.785398))
-
-      else:
-        bpy.ops.mesh.primitive_cone_add(vertices=4, end_fill_type='NOTHING', depth=2,
-            location=(x - W / 2, -y + H / 2, 0), radius1=1, rotation=(0, 0, 0.785398))
-
-      obj = bpy.context.scene.objects.active
-      name = obj.name
-
-      material = bpy.data.materials.new(name)
-      obj.data.materials.append(material)
-      material.diffuse_color = (r / 255, g / 255, b / 255)
-      material.raytrace_mirror.use = True
-      material.raytrace_mirror.reflect_factor = 0.25
-      material.raytrace_mirror.fresnel_factor = 3
-      material.raytrace_mirror.fade_to = 'FADE_TO_MATERIAL'
-      bpy.ops.object.material_slot_assign()
-
-    x += 1
-  y += 1
+pxl.draw(W, H, pixels, meta)
 
 ##=============================================================
 print('PixelDraw finished: %.4f sec' % (time() - begin))
 
 '''
-Sampling notes
-
+Sampling notes:        square unchecked.  seems like a joke button.
+                                   adds confusion to the interface.
 Branched Path Tracing
-Clamp Direct   10.00   this could be turned down to say 4
-Clamp Indirect 10.00   or 6, but it clamps down on fireflys
+Clamp Direct   10.00         this could be turned down to say 4
+Clamp Indirect 10.00       or 6, but it clamps down on fireflys
 Light Sample Thresh 0.5
 
 AA Samples:
-Render:       25
+Render:       25             <-- AntiAlias reduces noise
 Preview:       0
 
 Diffuse:       1
-Glossy:       50
+Glossy:       50          glossy tends to be noisy, but doesn't take much
+                          time to calculate extra samples, so I set this high
 rest of 'em:   1
 
 Turn transmission up to 5 if using transparent material
 
-Pattern:  Correlated Multi-jitter, it's like Sudoku render pattern
+Pattern:  Correlated Multi-jitter,  it's a Sudoku style render pattern
+
+
+
+===========================================================
+
+Camera notes:
+
+Location:
+X:         0.0
+Y:         0.5
+Z:         depends on focal length
+
+
+ Z    Focal len         Notes
+===   =========   =====================
+120     200       extended for accuracy
+ 50      30
+ 20      14       decreased for spikes
+
+
+Clipping:
+Start:    0.1
+End:      greater than your Z location value
 '''
 ##=============================================================
-#  eof
+##  eof  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
