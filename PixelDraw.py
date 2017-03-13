@@ -36,6 +36,8 @@
 ##  point this to wherever pip installed your PyPNG module:
 pngmodule  = '/usr/local/lib/python3.4/dist-packages/'
 
+##  win dir might look like this:  'C:\\Python\\Lib\\site-packages\\'
+
 ##  tell it where your PixelDraw dir is:
 path  = '/home/eli/Pictures/Blend/Python/PixelDraw/'
 
