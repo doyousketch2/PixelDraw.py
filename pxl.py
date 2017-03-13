@@ -54,6 +54,7 @@ def draw(W, H, pixels, meta, gloss=True):
   while Y < H:
     looptime  = floor((time() - looptimer) * 100) / 100
     print(str(looptime) + '  Line: ' + str(Y + 1) + ' of: ' + str(H))
+    if looptime > 2: Y = H; continue
     looptimer  = time()   ##  re-init timer for next loop
     yy  = array[Y]
 
@@ -97,17 +98,14 @@ def draw(W, H, pixels, meta, gloss=True):
 ##  location is scaleed on the grid,  radius1 is width,  radius2 chops off the top...
 ##  but it'll look hollow without end_fill,  rotation on the Z-axis 45° = 0.785398 radians
 
-        obj  = bpy.context.scene.objects.active
-        name  = obj.name
-
+        obj  = bpy.context.object
         colorstring  = 'r' + str(R) + ' g' + str(G) + ' b' + str(B)
 
         if colorstring in bpy.data.materials.keys():
-          bpy.context.object.data.materials.append(bpy.data.materials[colorstring])
-          bpy.data.materials[colorstring]
+          obj.data.materials.append(bpy.data.materials[colorstring])
 
         else:
-          material  = bpy.data.materials.new(name)
+          material  = bpy.data.materials.new(colorstring)
           obj.data.materials.append(material)
           material.diffuse_color  = (R / 256, G / 256, B / 256)
 
