@@ -54,7 +54,7 @@ def draw(W, H, pixels, meta, gloss=True):
   while Y < H:
     looptime  = floor((time() - looptimer) * 100) / 100
     print(str(looptime) + '  Line: ' + str(Y + 1) + ' of: ' + str(H))
-    if looptime > 2: Y = H; continue
+    ##  if looptime > 5: Y = H; continue  ##  for testing
     looptimer  = time()   ##  re-init timer for next loop
     yy  = array[Y]
 
