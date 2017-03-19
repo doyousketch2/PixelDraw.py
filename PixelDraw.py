@@ -34,7 +34,7 @@
 ##  vars  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ##  image name you're currently on:
-img   = 'DragonsCurse1'
+img   = 'DragonsCurse2'
 
 ##  no need to specify file extension,
 ##  PyPNG uses PNG files, exclusively.
@@ -76,12 +76,11 @@ else:                 ##  win
 
 print('Loading:  %s%s%s.png' % (cwd, inpu, img))
 Re  = png .Reader(cwd + inpu + img + filetype)
-W, H, pixels, meta  = Re .read()
+W, H, pixeldata, metadata  = Re .read()  ##  Width,  Height,
+##  raw pixel data that will be converted to an array,  metadata
 
-
-##  draw(W, H, pixels, meta, dimensions)
-
-vertices, faces, colors  = pxl .draw(W, H, pixels, meta, dimensions)
+##  pxl .draw(W, H, pixeldata, metadata, dimensions)
+vertices, faces, colors  = pxl .draw(W, H, pixeldata, metadata, dimensions)
 
 ##-------------------------------------
 ##  material
