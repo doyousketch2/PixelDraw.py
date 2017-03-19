@@ -27,8 +27,8 @@ def draw(W, H, pixels, meta, dimensions):
   foundcolors  = []
   array  = list(pixels)
 
-  blendergrid  = 16    ##  8 grid divs both dir from origin
-  blenderunit  = 100   ##  obj vert loc * 100 = blenderunit
+  blendergrid  = 16    ##  8 grid divisions in both directions from origin = 16
+  blenderunit  = 100   ##  .obj files apprently use centimeters, 100 = blenderunit
   maxwidth  = blendergrid * blenderunit
 
   if W > H:  scale  = maxwidth / W
