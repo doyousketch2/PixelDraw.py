@@ -1,6 +1,5 @@
 ##=========================================================
-##                                              11 Mar 2017
-##  pxl.py
+##  pxl.py                                      11 Mar 2017
 ##
 ##  turn pixels into polygons, from spritesheets to Blender
 ##
@@ -12,40 +11,64 @@
 ##=========================================================
 ##  libs  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import bpy
-import bmesh
 from time import time
 from math import floor
-from random import uniform
 
 ##=========================================================
 ##  script  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def draw(W, H, pixels, meta, gloss=True):
+def draw(W, H, pixels, meta, gloss=True, dimensions=3):
   looptimer  = time()   ##  initialize timer
+  newline  = 0
+  vert  = 1             ##  vertex counter
+  vertices  = []
+  faces  = ['\n\n']
+  colors  = []
+  foundcolors  = []
   array  = list(pixels)
 
-  if W > H:  scale  = 16 / W
-  else:      scale  = 16 / H
+  if W > H:  scale  = 1600 / W
+  else:      scale  = 1600 / H
+
+  halfpxl  = scale / 2
+  offsetX  = -scale * W / 2
+  offsetY  = scale * H / 2
 
   ##  the default grid is +8 & -8, along X and Y.
   ##  find the largest of those two  (W or H)
   ##  then use a scale-factor for the polygons
   ##  to center pixels within that 16 blender-unit square
 
-  print('Width: ' + str(W) + ', Height: ' + str(H))
+  print('\nWidth: %s,  Height: %s' % (W, H))
   #  print(array[X][Y] / 255)
 
   ##  meta['alpha'] is either True or False
   if meta['alpha']:   bpp  = 4     ##  RGBA
   else:               bpp  = 3     ##  RGB
                   ##  bpp  = bits per plane
-
   #  print(str(bpp))
   #  print(meta)
 
-  background  = [R, G, B]  = array[0][0:3]
-  print('background:  [' + str(R) + ', ' + str(G) + ', ' + str(B) + ']')
+  ##  background  = top-left corner pixel
+  background  = previousColor  = [R, G, B]  = array[0][0:3]
+  print('Background:  [%s, %s, %s]' % (R, G, B))
+
+##-------------------------------------
+##  find number of colors
+  Y  = 0
+  while Y < H:
+    yy  = array[Y]
+    X  = 0
+    while X < W:
+      xx  = X * bpp
+      color  = [R, G, B]  = yy[xx : xx + 3]
+      if color != background and color not in colors:
+        colors .append(color)
+      X += 1
+    Y += 1
+
+  print('Colors (excluding background): %s\n' % len(colors))
+##-------------------------------------
 
   ww  = W / 2
   hh  = H / 2
@@ -53,8 +76,11 @@ def draw(W, H, pixels, meta, gloss=True):
   Y  = 0
   while Y < H:
     looptime  = floor((time() - looptimer) * 100) / 100
-    print(str(looptime) + '  Line: ' + str(Y + 1) + ' of: ' + str(H))
-    ##  if looptime > 5: Y = H; continue  ##  for testing
+    if Y == 0:
+      print('Line: %s of: %s   Init took: %s secs' % (Y + 1, H, looptime))
+    else:
+      print('Line: %s of: %s   last line took: %s secs' % (Y + 1, H, looptime))
+    # if looptime > 2: Y = H; continue   ##  for testing
     looptimer  = time()   ##  re-init timer for next loop
     yy  = array[Y]
 
@@ -66,60 +92,66 @@ def draw(W, H, pixels, meta, gloss=True):
       xx  = X * bpp
       color  = [R, G, B]  = yy[xx : xx + 3]
 
-      if color != background:
+      xo  = offsetX + X * scale
+      yo  = offsetY - Y * scale
+
+      if color == background:
+        previousColor  = color
+      else:
         #  print(str(X) + ', ' + str(Y) + ',  ' + str(color))
 
-        brightness  = (R+R + G+G+G + B) / 6
+        if color == previousColor and newline == 0:
+          top  = floor((yo + halfpxl) * 10000) / 10000
+          right  = floor((xo + halfpxl) * 10000) / 10000
+          bottom  = floor((yo - halfpxl) * 10000) / 10000
+
+          vertices[-2]  = ('v %s %s %s' % (right, bottom, zz))
+          vertices[-1]  = ('v %s %s %s' % (right,  top,   zz))
+
+        else:
+          newline  = 0
+          colorstring  = 'r%s g%s b%s' % (R, G, B)
+          brightness  = (R+R + G+G+G + B) / 6
 ##    our eyes are sensitive to shades of red and even moreso to green,
 ##    so extra samples of them are taken when averaging luminosity value.
 ##    stackoverflow.com/a/596241       using fast approximation
 
-        Z  = brightness / 50
-        zz  = Z / 10
+          if colorstring not in foundcolors:
+            rr  = floor((R / 255) * 100) / 100
+            gg  = floor((G / 255) * 100) / 100
+            bb  = floor((B / 255) * 100) / 100
+            colors .append('newmtl %s' % colorstring)
+            colors .append('Kd %s %s %s\n' % (rr, gg, bb))
 
-        if brightness < 10:   ##  shadow
-          bpy.ops.mesh.primitive_ico_sphere_add(size= scale + 0.3,
-              location= ((X - ww) * scale,  (-Y + hh) * scale,  Z),
-              rotation= (0,  0,  uniform(-1, 1)))
+          Z  = brightness / 50
+          zz  = floor((Z / 10) * 10000) / 20
 
-        elif brightness < 200:   ##  midtone
-          bpy.ops.mesh.primitive_cone_add(vertices= 4,   end_fill_type= 'NOTHING',
-              depth= 4 - Z,  radius1= scale + 0.2 - zz,
-              location= ((X - ww) * scale,  (-Y + hh) * scale,  Z * 0.7),
-              rotation= (0,  0,  0.785398))      ##  + uniform(-0.5, 0.5)))
+          top  = floor((yo + halfpxl) * 10000) / 10000
+          left  = floor((xo - halfpxl) * 10000) / 10000
+          right  = floor((xo + halfpxl) * 10000) / 10000
+          bottom  = floor((yo - halfpxl) * 10000) / 10000
 
-        else:   ##  highlight
-          bpy.ops.mesh.primitive_cone_add(vertices  = 4,   end_fill_type= 'NOTHING',
-              depth= 5.1 - Z,   radius1= scale,
-              location= ((X - ww) * scale,  (-Y + hh) * scale,  Z * 0.5),
-              rotation= (0, 0, 0.785398))
+          vertices .append('v %s %s %s' % (left,   top,   zz))
+          vertices .append('v %s %s %s' % (left,  bottom, zz))
+          vertices .append('v %s %s %s' % (right, bottom, zz))
+          vertices .append('v %s %s %s' % (right,  top,   zz))
 
-##  4 vertices = pyramid,  end_fill = nothing  cuts down on polygons,  depth is how tall it is
-##  location is scaleed on the grid,  radius1 is width,  radius2 chops off the top...
-##  but it'll look hollow without end_fill,  rotation on the Z-axis 45° = 0.785398 radians
+          if ('usemtl %s' % colorstring) in faces:
+            ci  = colors .index('newmtl %s' % colorstring)
+            if ci + 3 < len(colors):
+              ci += 2  ##  find next color, get index in faces for that color, skip 'newmtl '
+            fi  = faces .index('usemtl %s' % colors[ci][7:])
+            faces .insert(fi, 'f %s %s %s %s' % (vert, vert + 1, vert + 2, vert + 3))
+          else:
+            faces .append('usemtl %s' % colorstring)
+            faces .append('f %s %s %s %s' % (vert, vert + 1, vert + 2, vert + 3))
 
-        obj  = bpy.context.object
-        colorstring  = 'r' + str(R) + ' g' + str(G) + ' b' + str(B)
-
-        if colorstring in bpy.data.materials.keys():
-          obj.data.materials.append(bpy.data.materials[colorstring])
-
-        else:
-          material  = bpy.data.materials.new(colorstring)
-          obj.data.materials.append(material)
-          material.diffuse_color  = (R / 256, G / 256, B / 256)
-
-          if gloss:
-            material.raytrace_mirror.use  = True
-            material.raytrace_mirror.reflect_factor  = 0.25
-            material.raytrace_mirror.fresnel_factor  = 3
-            material.raytrace_mirror.fade_to  = 'FADE_TO_MATERIAL'
-
-          bpy.ops.object.material_slot_assign()
-
+          previousColor  = color
+          vert += 4
       X += 1
+    newline  = 1
     Y += 1
-
+  return vertices, faces, colors
 
 
 ##=============================================================
