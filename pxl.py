@@ -66,7 +66,8 @@ def draw(W, H, pixels, meta, dimensions):
       color  = [R, G, B]  = yy[xx : xx + 3]
       if color != background and color not in foundcolors:
         foundcolors .append(color)
-        print('Found %s colors' % C, end = '\r')
+        if C == 0:  print('Found %s color' % C, end = '\r')
+        else:       print('Found %s colors' % C, end = '\r')
         C += 1
       X += 1
     Y += 1
@@ -134,24 +135,25 @@ def draw(W, H, pixels, meta, dimensions):
           previousColor  = pxlcolor
         else:
           #  print(str(X) + ', ' + str(Y) + ',  ' + str(color))
-          xo  = offsetX + X * scale
-          yo  = offsetY - Y * scale
+          xoff  = offsetX + X * scale
+          yoff  = offsetY - Y * scale
 
           if pxlcolor == color and previousColor == pxlcolor and newline == 0:
-            top  = floor((yo + halfpxl) * 10000) / 10000
-            right  = floor((xo + halfpxl) * 10000) / 10000
-            bottom  = floor((yo - halfpxl) * 10000) / 10000
+            top  = floor((yoff + halfpxl) * 10000) / 10000
+            right  = floor((xoff + halfpxl) * 10000) / 10000
+            bottom  = floor((yoff - halfpxl) * 10000) / 10000
 
+##  replace last two vertices in list, so we get RunLengthEncoding effect
             vertices[-2]  = ('v %s %s %s' % (right, bottom, zz))
             vertices[-1]  = ('v %s %s %s' % (right,  top,   zz))
 
           elif pxlcolor == color:
             newline  = 0
 
-            top  = floor((yo + halfpxl) * 10000) / 10000
-            left  = floor((xo - halfpxl) * 10000) / 10000
-            right  = floor((xo + halfpxl) * 10000) / 10000
-            bottom  = floor((yo - halfpxl) * 10000) / 10000
+            top  = floor((yoff + halfpxl) * 10000) / 10000
+            left  = floor((xoff - halfpxl) * 10000) / 10000
+            right  = floor((xoff + halfpxl) * 10000) / 10000
+            bottom  = floor((yoff - halfpxl) * 10000) / 10000
 
             vertices .append('v %s %s %s' % (left,   top,   zz))
             vertices .append('v %s %s %s' % (left,  bottom, zz))
