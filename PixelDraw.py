@@ -1,6 +1,6 @@
+#!/usr/bin/python3
 ##=========================================================
-##                                              10 Mar 2017
-##  PixelDraw.py
+##  PixelDraw.py                                10 Mar 2017
 ##
 ##  turn pixels into polygons, from spritesheets to Blender
 ##
@@ -33,16 +33,8 @@
 ##=============================================================
 ##  vars  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-##  point this to wherever pip installed your PyPNG module:
-pngmodule  = '/usr/local/lib/python3.4/dist-packages/'
-
-##  win dir might look like this:  'C:\\Python\\Lib\\site-packages\\'
-
-##  tell it where your PixelDraw dir is:
-path  = '/home/eli/Pictures/Blend/Python/PixelDraw/'
-
 ##  image name you're currently on:
-img   = 'DragonsCurse'
+img   = 'Tanooki'
 
 ##  no need to specify file extension,
 ##  PyPNG uses PNG files, exclusively.
@@ -54,34 +46,101 @@ filetype  = '.png'
 ##  glossy Raytrace?  True / False
 gloss  = False
 
+##  if set to 2, pixels will be planes (still elevated along Z axis)
+##  if set to 3, pixels will be pyramids
+dimensions  = 2
+
+##  printed between verts and faces
+divider = '##======================================'
+
 ##=============================================================
 ##  libs  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+import os
 import sys
 from time import time
-
-sys.path.append(pngmodule)
-
+from math import floor
 import png
-
-sys.path.append(path)
-
 import pxl
 
 begin  = time()        ##  initialize timer. Blender advises it
 ##=============================================================
 ##  script  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Re  = png.Reader(path + img + filetype)
-W, H, pixels, meta  = Re.read()
+getsize  = os .path .getsize
+cwd  = os .getcwd()
+
+if cwd[0] is '/':   ##  linux
+  inpu  = '/Input/'
+  outpu  = '/Output/'
+else:                 ##  win
+  inpu  = '\\Input\\'
+  outpu  = '\\Output\\'
+
+print('Loading:  %s%s%s.png' % (cwd, inpu, img))
+Re  = png .Reader(cwd + inpu + img + filetype)
+W, H, pixels, meta  = Re .read()
 
 
 ##  draw(W, H, pixels, meta, gloss=True)
 
-pxl.draw(W, H, pixels, meta, gloss)
+vertices, faces, colors  = pxl .draw(W, H, pixels, meta, gloss, dimensions)
 
+##-------------------------------------
+##  material
 
-print('PixelDraw finished: %.4f sec' % (time() - begin))
+with open(cwd + outpu + img + '.mtl', 'w') as mtl:
+
+  print('\nWriting header to %s.mtl' % img)
+  mtl .write('%s\n' % divider)
+  mtl .write('##  Materials exported from PixelDraw\n')
+  mtl .write('##  github.com/doyousketch2/PixelDraw.py\n')
+  mtl .write('%s\n' % divider)
+  mtl .write('##  Colors used by %s.obj\n\n' % img)
+
+  print('Writing colors to %s.mtl' % img)
+  for c in colors:
+    mtl .write(('%s\n') % c)
+
+##  filesize
+size  = getsize(cwd + outpu + img + '.mtl')
+KiB  = size / 1024
+floored  = floor(KiB * 100) / 100
+print('      %s KiB written\n' % floored)
+
+##-------------------------------------
+##  object data
+
+with open(cwd + outpu + img + '.obj', 'w') as obj:
+
+  print('Writing header to %s.obj' % img)
+  obj .write('%s\n' % divider)
+  obj .write('##  Model exported from PixelDraw\n')
+  obj .write('##  github.com/doyousketch2/PixelDraw.py\n')
+  obj .write('%s\n\n' % divider)
+  obj .write(('mtllib %s.mtl\n\n') % img)
+  obj .write('%s\n##  Vertices:\n\n' % divider)
+
+  print('Writing vertices to %s.obj' % img)
+  for v in vertices:
+    obj .write(('%s\n') % v)
+
+  print('Writing faces to %s.obj' % img)
+  obj .write(('\n%s\n##  Faces:\n\n') % divider)
+  for f in faces:
+    obj .write(('%s\n') % f)
+
+##  filesize
+size  = getsize(cwd + outpu + img + '.obj')
+KiB  = size / 1024
+floored  = floor(KiB * 100) / 100
+print('      %s KiB written\n' % floored)
+
+##-------------------------------------
+
+print('Blender > File > Import > Wavefront (.obj)')
+print('%s%s%s.obj\n' % (cwd, outpu, img))
+print('PixelDraw finished: %.4f sec\n' % (time() - begin))
 ##=============================================================
 '''
 Sampling notes:     square unchecked.  seems like a joke button
