@@ -39,7 +39,7 @@ def draw(W, H, pixels, meta, gloss=True, dimensions=3):
   ##  then use a scale-factor for the polygons
   ##  to center pixels within that 16 blender-unit square
 
-  print('\nWidth: %s,  Height: %s' % (W, H))
+  print('Width: ' + str(W) + ', Height: ' + str(H))
   #  print(array[X][Y] / 255)
 
   ##  meta['alpha'] is either True or False
@@ -51,24 +51,7 @@ def draw(W, H, pixels, meta, gloss=True, dimensions=3):
 
   ##  background  = top-left corner pixel
   background  = previousColor  = [R, G, B]  = array[0][0:3]
-  print('Background:  [%s, %s, %s]' % (R, G, B))
-
-##-------------------------------------
-##  find number of colors
-  Y  = 0
-  while Y < H:
-    yy  = array[Y]
-    X  = 0
-    while X < W:
-      xx  = X * bpp
-      color  = [R, G, B]  = yy[xx : xx + 3]
-      if color != background and color not in colors:
-        colors .append(color)
-      X += 1
-    Y += 1
-
-  print('Colors (excluding background): %s\n' % len(colors))
-##-------------------------------------
+  print('background:  [' + str(R) + ', ' + str(G) + ', ' + str(B) + ']')
 
   ww  = W / 2
   hh  = H / 2
@@ -76,10 +59,7 @@ def draw(W, H, pixels, meta, gloss=True, dimensions=3):
   Y  = 0
   while Y < H:
     looptime  = floor((time() - looptimer) * 100) / 100
-    if Y == 0:
-      print('Line: %s of: %s   Init took: %s secs' % (Y + 1, H, looptime))
-    else:
-      print('Line: %s of: %s   last line took: %s secs' % (Y + 1, H, looptime))
+    print('Line: ' + str(Y + 1) + ' of: ' + str(H) + '   last line took: ' + str(looptime) + ' secs')
     # if looptime > 2: Y = H; continue   ##  for testing
     looptimer  = time()   ##  re-init timer for next loop
     yy  = array[Y]
@@ -110,7 +90,7 @@ def draw(W, H, pixels, meta, gloss=True, dimensions=3):
 
         else:
           newline  = 0
-          colorstring  = 'r%s g%s b%s' % (R, G, B)
+          colorstring  = 'r' + str(R) + ' g' + str(G) + ' b' + str(B)
           brightness  = (R+R + G+G+G + B) / 6
 ##    our eyes are sensitive to shades of red and even moreso to green,
 ##    so extra samples of them are taken when averaging luminosity value.
@@ -122,6 +102,8 @@ def draw(W, H, pixels, meta, gloss=True, dimensions=3):
             bb  = floor((B / 255) * 100) / 100
             colors .append('newmtl %s' % colorstring)
             colors .append('Kd %s %s %s\n' % (rr, gg, bb))
+
+          faces .append('usemtl %s' % colorstring)
 
           Z  = brightness / 50
           zz  = floor((Z / 10) * 10000) / 20
@@ -136,15 +118,7 @@ def draw(W, H, pixels, meta, gloss=True, dimensions=3):
           vertices .append('v %s %s %s' % (right, bottom, zz))
           vertices .append('v %s %s %s' % (right,  top,   zz))
 
-          if ('usemtl %s' % colorstring) in faces:
-            ci  = colors .index('newmtl %s' % colorstring)
-            if ci + 3 < len(colors):
-              ci += 2  ##  find next color, get index in faces for that color, skip 'newmtl '
-            fi  = faces .index('usemtl %s' % colors[ci][7:])
-            faces .insert(fi, 'f %s %s %s %s' % (vert, vert + 1, vert + 2, vert + 3))
-          else:
-            faces .append('usemtl %s' % colorstring)
-            faces .append('f %s %s %s %s' % (vert, vert + 1, vert + 2, vert + 3))
+          faces .append('f %s %s %s %s' % (vert, vert + 1, vert + 2, vert + 3))
 
           previousColor  = color
           vert += 4
