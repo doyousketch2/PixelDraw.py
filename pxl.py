@@ -17,9 +17,9 @@ from math import floor
 ##=========================================================
 ##  script  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def draw(W, H, pixels, meta, gloss=True, dimensions=3):
+def draw(W, H, pixels, meta, dimensions):
   looptimer  = time()   ##  initialize timer
-  newline  = 0
+  newline  = 1
   vert  = 1             ##  vertex counter
   vertices  = []
   faces  = ['\n\n']
@@ -27,8 +27,12 @@ def draw(W, H, pixels, meta, gloss=True, dimensions=3):
   foundcolors  = []
   array  = list(pixels)
 
-  if W > H:  scale  = 1600 / W
-  else:      scale  = 1600 / H
+  blendergrid  = 16    ##  8 grid divs both dir from origin
+  blenderunit  = 100   ##  obj vert loc * 100 = blenderunit
+  maxwidth  = blendergrid * blenderunit
+
+  if W > H:  scale  = maxwidth / W
+  else:      scale  = maxwidth / H
 
   halfpxl  = scale / 2
   offsetX  = -scale * W / 2
@@ -39,9 +43,6 @@ def draw(W, H, pixels, meta, gloss=True, dimensions=3):
   ##  then use a scale-factor for the polygons
   ##  to center pixels within that 16 blender-unit square
 
-  print('Width: ' + str(W) + ', Height: ' + str(H))
-  #  print(array[X][Y] / 255)
-
   ##  meta['alpha'] is either True or False
   if meta['alpha']:   bpp  = 4     ##  RGBA
   else:               bpp  = 3     ##  RGB
@@ -51,80 +52,119 @@ def draw(W, H, pixels, meta, gloss=True, dimensions=3):
 
   ##  background  = top-left corner pixel
   background  = previousColor  = [R, G, B]  = array[0][0:3]
-  print('background:  [' + str(R) + ', ' + str(G) + ', ' + str(B) + ']')
+  print('\nWidth: %s,  Height: %s,  Background:  r%s g%s b%s' % (W, H, R, G, B))
+
+##-------------------------------------v
+##  find number of colors
+  C= 0
+  Y  = 0
+  while Y < H:
+    yy  = array[Y]
+    X  = 0
+    while X < W:
+      xx  = X * bpp
+      color  = [R, G, B]  = yy[xx : xx + 3]
+      if color != background and color not in foundcolors:
+        foundcolors .append(color)
+        print('Found %s colors' % C, end = '\r')
+        C += 1
+      X += 1
+    Y += 1
+
+  print('Found %s colors (excluding background)\n' % len(foundcolors))
+##-------------------------------------^
 
   ww  = W / 2
   hh  = H / 2
 
-  Y  = 0
-  while Y < H:
+  C= 1   ##  init loop counter
+  numcolors  = len(foundcolors)
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##  main color loop
+
+  for color in foundcolors:
+    R, G, B  = color
+
+##-------------------------------------v
+##  looptimer to print info
     looptime  = floor((time() - looptimer) * 100) / 100
-    print('Line: ' + str(Y + 1) + ' of: ' + str(H) + '   last line took: ' + str(looptime) + ' secs')
-    # if looptime > 2: Y = H; continue   ##  for testing
+    if C == 1:  print('Color: %s of: %s   Init took: %s secs          r%s g%s b%s' % (C, numcolors, looptime, R, G, B), end = '\r')
+    else:       print('Color: %s of: %s   last color took: %s secs   r%s g%s b%s' % (C, numcolors, looptime, R, G, B), end = '\r')
+    # if looptime > 2: Y = H; continue    ##  break out of loop, for testing
     looptimer  = time()   ##  re-init timer for next loop
-    yy  = array[Y]
+    C += 1
+##-------------------------------------
+##  determine color info for this layer
 
-    X  = 0
-    while X < W:
-      ##if meta['indexed']:
-        ##index  = array[Y][X]
+    rr  = floor((R / 255) * 100) / 100
+    gg  = floor((G / 255) * 100) / 100
+    bb  = floor((B / 255) * 100) / 100
+    colorstring  = 'r%s g%s b%s' % (R, G, B)
 
-      xx  = X * bpp
-      color  = [R, G, B]  = yy[xx : xx + 3]
+    colors .append('newmtl %s' % colorstring)
+    colors .append('Kd %s %s %s\n' % (rr, gg, bb))
+    faces .append('usemtl %s' % colorstring)
 
-      xo  = offsetX + X * scale
-      yo  = offsetY - Y * scale
+    brightness  = (R+R + G+G+G + B) / 6
 
-      if color == background:
-        previousColor  = color
-      else:
-        #  print(str(X) + ', ' + str(Y) + ',  ' + str(color))
-
-        if color == previousColor and newline == 0:
-          top  = floor((yo + halfpxl) * 10000) / 10000
-          right  = floor((xo + halfpxl) * 10000) / 10000
-          bottom  = floor((yo - halfpxl) * 10000) / 10000
-
-          vertices[-2]  = ('v %s %s %s' % (right, bottom, zz))
-          vertices[-1]  = ('v %s %s %s' % (right,  top,   zz))
-
-        else:
-          newline  = 0
-          colorstring  = 'r' + str(R) + ' g' + str(G) + ' b' + str(B)
-          brightness  = (R+R + G+G+G + B) / 6
 ##    our eyes are sensitive to shades of red and even moreso to green,
 ##    so extra samples of them are taken when averaging luminosity value.
-##    stackoverflow.com/a/596241       using fast approximation
+##    stackoverflow.com/a/596241                using fast approximation
 
-          if colorstring not in foundcolors:
-            rr  = floor((R / 255) * 100) / 100
-            gg  = floor((G / 255) * 100) / 100
-            bb  = floor((B / 255) * 100) / 100
-            colors .append('newmtl %s' % colorstring)
-            colors .append('Kd %s %s %s\n' % (rr, gg, bb))
+    Z  = brightness / 50
+    zz  = floor((Z / 10) * 10000) / 20
 
-          faces .append('usemtl %s' % colorstring)
+##-------------------------------------v
+##  iterate through pixels
 
-          Z  = brightness / 50
-          zz  = floor((Z / 10) * 10000) / 20
+    Y  = 0
+    while Y < H:
+      yy  = array[Y]
 
-          top  = floor((yo + halfpxl) * 10000) / 10000
-          left  = floor((xo - halfpxl) * 10000) / 10000
-          right  = floor((xo + halfpxl) * 10000) / 10000
-          bottom  = floor((yo - halfpxl) * 10000) / 10000
+      X  = 0
+      while X < W:
+        ##if meta['indexed']:
+          ##index  = array[Y][X]
 
-          vertices .append('v %s %s %s' % (left,   top,   zz))
-          vertices .append('v %s %s %s' % (left,  bottom, zz))
-          vertices .append('v %s %s %s' % (right, bottom, zz))
-          vertices .append('v %s %s %s' % (right,  top,   zz))
+        xx  = X * bpp
+        pxlcolor  = yy[xx : xx + 3]
 
-          faces .append('f %s %s %s %s' % (vert, vert + 1, vert + 2, vert + 3))
+        if pxlcolor != color:
+          previousColor  = pxlcolor
+        else:
+          #  print(str(X) + ', ' + str(Y) + ',  ' + str(color))
+          xo  = offsetX + X * scale
+          yo  = offsetY - Y * scale
 
-          previousColor  = color
-          vert += 4
-      X += 1
-    newline  = 1
-    Y += 1
+          if pxlcolor == color and previousColor == pxlcolor and newline == 0:
+            top  = floor((yo + halfpxl) * 10000) / 10000
+            right  = floor((xo + halfpxl) * 10000) / 10000
+            bottom  = floor((yo - halfpxl) * 10000) / 10000
+
+            vertices[-2]  = ('v %s %s %s' % (right, bottom, zz))
+            vertices[-1]  = ('v %s %s %s' % (right,  top,   zz))
+
+          elif pxlcolor == color:
+            newline  = 0
+
+            top  = floor((yo + halfpxl) * 10000) / 10000
+            left  = floor((xo - halfpxl) * 10000) / 10000
+            right  = floor((xo + halfpxl) * 10000) / 10000
+            bottom  = floor((yo - halfpxl) * 10000) / 10000
+
+            vertices .append('v %s %s %s' % (left,   top,   zz))
+            vertices .append('v %s %s %s' % (left,  bottom, zz))
+            vertices .append('v %s %s %s' % (right, bottom, zz))
+            vertices .append('v %s %s %s' % (right,  top,   zz))
+
+            faces .append('f %s %s %s %s' % (vert, vert + 1, vert + 2, vert + 3))
+
+            previousColor  = pxlcolor
+            vert += 4
+        X += 1
+      newline  = 1
+      Y += 1
   return vertices, faces, colors
 
 
