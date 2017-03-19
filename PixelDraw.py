@@ -34,7 +34,7 @@
 ##  vars  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ##  image name you're currently on:
-img   = 'Tanooki'
+img   = 'DragonsCurse1'
 
 ##  no need to specify file extension,
 ##  PyPNG uses PNG files, exclusively.
@@ -42,9 +42,6 @@ filetype  = '.png'
 
 ##  it doesn't like indexed images yet...
 ##  you may need to convert to RGB instead.
-
-##  glossy Raytrace?  True / False
-gloss  = False
 
 ##  if set to 2, pixels will be planes (still elevated along Z axis)
 ##  if set to 3, pixels will be pyramids
@@ -58,9 +55,9 @@ divider = '##======================================'
 
 import os
 import sys
+import png
 from time import time
 from math import floor
-import png
 import pxl
 
 begin  = time()        ##  initialize timer. Blender advises it
@@ -82,16 +79,16 @@ Re  = png .Reader(cwd + inpu + img + filetype)
 W, H, pixels, meta  = Re .read()
 
 
-##  draw(W, H, pixels, meta, gloss=True)
+##  draw(W, H, pixels, meta, dimensions)
 
-vertices, faces, colors  = pxl .draw(W, H, pixels, meta, gloss, dimensions)
+vertices, faces, colors  = pxl .draw(W, H, pixels, meta, dimensions)
 
 ##-------------------------------------
 ##  material
 
 with open(cwd + outpu + img + '.mtl', 'w') as mtl:
 
-  print('\nWriting header to %s.mtl' % img)
+  print('\n\nWriting header to %s.mtl' % img)
   mtl .write('%s\n' % divider)
   mtl .write('##  Materials exported from PixelDraw\n')
   mtl .write('##  github.com/doyousketch2/PixelDraw.py\n')
@@ -151,12 +148,12 @@ Clamp Indirect 10.00       or 6, but it clamps down on fireflys
 Light Sample Thresh 0.5
 
 AA Samples:
-Render:       25             <-- AntiAlias reduces noise
+Render:       25  <-- AntiAlias reduces noise, higher is better
 Preview:       0
 
 Diffuse:       1
-Glossy:       50      glossy tends to be noisy, doesn't take much
-                  time to calculate extra samples, so set it high
+Glossy:       50                       glossy tends to be noisy
+Transmission:  5   if using glass...   1 otherwise.
 rest of 'em:   1
 
 Turn transmission up to 5 if using transparent material
