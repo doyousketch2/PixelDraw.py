@@ -17,15 +17,16 @@ from math import floor
 ##=========================================================
 ##  script  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def draw(W, H, pixels, meta, dimensions):
-  looptimer  = time()   ##  initialize timer
+def draw(W, H, pixeldata, metadata, dimensions):
+  looptimer  = time()       ##  initialize timer
+  array  = list(pixeldata)  ##  convert raw pixeldata into an array
+
   newline  = 1
-  vert  = 1             ##  vertex counter
+  vert  = 1                 ##  vertex counter
   vertices  = []
   faces  = ['\n\n']
-  colors  = []
   foundcolors  = []
-  array  = list(pixels)
+  colors  = []
 
   blendergrid  = 16    ##  8 grid divisions in both directions from origin = 16
   blenderunit  = 100   ##  .obj files apprently use centimeters, 100 = blenderunit
@@ -35,20 +36,20 @@ def draw(W, H, pixels, meta, dimensions):
   else:      scale  = maxwidth / H
 
   halfpxl  = scale / 2
-  offsetX  = -scale * W / 2
-  offsetY  = scale * H / 2
+  offx  = -scale * W / 2
+  offy  = scale * H / 2
 
   ##  the default grid is +8 & -8, along X and Y.
   ##  find the largest of those two  (W or H)
   ##  then use a scale-factor for the polygons
   ##  to center pixels within that 16 blender-unit square
 
-  ##  meta['alpha'] is either True or False
-  if meta['alpha']:   bpp  = 4     ##  RGBA
-  else:               bpp  = 3     ##  RGB
-                  ##  bpp  = bits per plane
+  ##  metadata['alpha'] is either True or False
+  if metadata['alpha']:   bpp  = 4  ##  RGBA
+  else:                   bpp  = 3  ##  RGB
+                      ##  bpp  = bits per plane
   #  print(str(bpp))
-  #  print(meta)
+  #  print(metadata)
 
   ##  background  = top-left corner pixel
   background  = previousColor  = [R, G, B]  = array[0][0:3]
@@ -98,6 +99,9 @@ def draw(W, H, pixels, meta, dimensions):
 ##-------------------------------------
 ##  determine color info for this layer
 
+##  divide by 255 to convert colors from (0 - 255) range into (0 - 1) range
+##  floor(num * 100) / 100   drops digits off of floats to 2 decimal places
+
     rr  = floor((R / 255) * 100) / 100
     gg  = floor((G / 255) * 100) / 100
     bb  = floor((B / 255) * 100) / 100
@@ -125,7 +129,7 @@ def draw(W, H, pixels, meta, dimensions):
 
       X  = 0
       while X < W:
-        ##if meta['indexed']:
+        ##if metadata['indexed']:
           ##index  = array[Y][X]
 
         xx  = X * bpp
@@ -135,13 +139,15 @@ def draw(W, H, pixels, meta, dimensions):
           previousColor  = pxlcolor
         else:
           #  print(str(X) + ', ' + str(Y) + ',  ' + str(color))
-          xoff  = offsetX + X * scale
-          yoff  = offsetY - Y * scale
+          offsetX  = offx + X * scale
+          offsetY  = offy - Y * scale
+
+##  floor(num * 10000) / 10000  drops digits off of floats to 4 decimal places
 
           if pxlcolor == color and previousColor == pxlcolor and newline == 0:
-            top  = floor((yoff + halfpxl) * 10000) / 10000
-            right  = floor((xoff + halfpxl) * 10000) / 10000
-            bottom  = floor((yoff - halfpxl) * 10000) / 10000
+            top  = floor((offsetY + halfpxl) * 10000) / 10000
+            right  = floor((offsetX + halfpxl) * 10000) / 10000
+            bottom  = floor((offsetY - halfpxl) * 10000) / 10000
 
 ##  replace last two vertices in list, so we get RunLengthEncoding effect
             vertices[-2]  = ('v %s %s %s' % (right, bottom, zz))
@@ -150,10 +156,10 @@ def draw(W, H, pixels, meta, dimensions):
           elif pxlcolor == color:
             newline  = 0
 
-            top  = floor((yoff + halfpxl) * 10000) / 10000
-            left  = floor((xoff - halfpxl) * 10000) / 10000
-            right  = floor((xoff + halfpxl) * 10000) / 10000
-            bottom  = floor((yoff - halfpxl) * 10000) / 10000
+            top  = floor((offsetY + halfpxl) * 10000) / 10000
+            left  = floor((offsetX - halfpxl) * 10000) / 10000
+            right  = floor((offsetX + halfpxl) * 10000) / 10000
+            bottom  = floor((offsetY - halfpxl) * 10000) / 10000
 
             vertices .append('v %s %s %s' % (left,   top,   zz))
             vertices .append('v %s %s %s' % (left,  bottom, zz))
